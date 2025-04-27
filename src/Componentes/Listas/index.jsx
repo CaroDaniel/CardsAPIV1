@@ -5,8 +5,8 @@ import './style.css';
 
 function Listas() {
   const [deckId, setDeckId] = useState(null);
+  const [todasLasCartas, setTodasLasCartas] = useState([]); // ← Las 52 originales
   const [cards, setCards] = useState([]);
-  const [filteredCards, setFilteredCards] = useState([]);
   const [filter, setFilter] = useState('All');
   const [busqueda, setBusqueda] = useState('');
   const navigate = useNavigate();
@@ -16,18 +16,18 @@ function Listas() {
       .then((response) => response.json())
       .then((data) => {
         setDeckId(data.deck_id);
-        obtenerCartas(data.deck_id, 52); // Al inicio, cargar 52 cartas
+        obtenerCartas(data.deck_id);
       })
       .catch((error) => console.error("Error al obtener la baraja:", error));
   }, []);
 
-  const obtenerCartas = (deckId, cantidad) => {
-    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${cantidad}`)
+  const obtenerCartas = (deckId) => {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=52`)
       .then((response) => response.json())
       .then((data) => {
         const cartasOrdenadas = ordenarCartas(data.cards);
+        setTodasLasCartas(cartasOrdenadas); // ← Guardar todas para siempre
         setCards(cartasOrdenadas);
-        setFilteredCards(cartasOrdenadas);
       })
       .catch((error) => console.error("Error al obtener las cartas:", error));
   };
@@ -55,18 +55,20 @@ function Listas() {
     setFilter(tipo);
     setBusqueda('');
     if (tipo === 'All') {
-      setFilteredCards(cards);
+      setCards(todasLasCartas);
     } else {
-      const cartasFiltradas = cards.filter((card) => card.suit.toLowerCase() === tipo.toLowerCase());
-      setFilteredCards(cartasFiltradas);
+      const cartasFiltradas = todasLasCartas.filter(
+        (card) => card.suit.toLowerCase() === tipo.toLowerCase()
+      );
+      setCards(cartasFiltradas);
     }
   };
 
   const handleRebarajar = () => {
-    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/`)
-      .then((response) => response.json())
-      .then(() => obtenerCartas(deckId, 7)) // Ahora saca solo 7 cartas
-      .catch((error) => console.error("Error al barajar las cartas:", error));
+    const cartasAleatorias = [...todasLasCartas]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 7);
+    setCards(cartasAleatorias);
   };
 
   const handleBusquedaChange = (e) => {
@@ -76,17 +78,27 @@ function Listas() {
       aplicarFiltroActual();
       return;
     }
-    const cartaBuscada = cards.filter(card => card.code.toUpperCase() === valor);
-    setFilteredCards(cartaBuscada);
+    const cartaBuscada = todasLasCartas.filter(
+      (card) => card.code.toUpperCase() === valor
+    );
+    setCards(cartaBuscada);
   };
 
   const aplicarFiltroActual = () => {
     if (filter === 'All') {
-      setFilteredCards(cards);
+      setCards(todasLasCartas);
     } else {
-      const cartasFiltradas = cards.filter((card) => card.suit.toLowerCase() === filter.toLowerCase());
-      setFilteredCards(cartasFiltradas);
+      const cartasFiltradas = todasLasCartas.filter(
+        (card) => card.suit.toLowerCase() === filter.toLowerCase()
+      );
+      setCards(cartasFiltradas);
     }
+  };
+
+  const handleVolver = () => {
+    setCards(todasLasCartas);
+    setFilter('All');
+    setBusqueda('');
   };
 
   if (!deckId) return <p>Cargando baraja...</p>;
@@ -104,13 +116,13 @@ function Listas() {
       <Filtro onTipoChange={handleFiltro} />
 
       <div className="c-botones">
-        <button onClick={() => navigate(-1)}>Volver</button>
+        <button onClick={handleVolver}>Volver</button>
         <button onClick={handleRebarajar}>Rebarajar 7 cartas</button>
       </div>
 
       <section className="c-lista">
-        {filteredCards.length > 0 ? (
-          filteredCards.map((card, index) => (
+        {cards.length > 0 ? (
+          cards.map((card, index) => (
             <div className="c-lista-carta" key={index}>
               <img src={card.image} alt={`${card.value} de ${card.suit}`} width="100" />
               <p>{card.value} de {card.suit}</p>
