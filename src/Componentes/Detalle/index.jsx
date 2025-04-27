@@ -3,15 +3,19 @@ import './style.css'
 
 function Detalle() {
     const [datacard, setDatacard] = useState([]);
+    const { code } = useParams();
 
     useEffect(() => {
-        fetch(`https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1`)
+        fetch(`https://deckofcardsapi.com/api/deck/new/shuffle/?count=52`)
             .then(response => response.json())
-            .then(responseData => setDatacard(data.cards[0]))
+            .then(data => {
+                const cartaEncontrada = data.cards.find(carta => carta.code === code);
+                setCardData(cartaEncontrada);
+              })
             .catch(error => console.error("Error:", error));
-    }, []);
+    }, [code]);
 
-    if (!datacard) return <p>Cargando...</p>;
+    if (!datacard) return <p>Cargando carta...</p>;
 
     return (
         <div className="carta">
