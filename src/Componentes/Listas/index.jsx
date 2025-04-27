@@ -7,8 +7,8 @@ function Listas() {
   const [deckId, setDeckId] = useState(null);
   const [cards, setCards] = useState([]);
   const [filteredCards, setFilteredCards] = useState([]);
-  const [filter, setFilter] = useState('All'); // Filtro de tipo
-  const [busqueda, setBusqueda] = useState(''); // Nuevo: Estado para el buscador
+  const [filter, setFilter] = useState('All');
+  const [busqueda, setBusqueda] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,18 +16,18 @@ function Listas() {
       .then((response) => response.json())
       .then((data) => {
         setDeckId(data.deck_id);
-        obtenerCartas(data.deck_id);
+        obtenerCartas(data.deck_id, 52); // Al inicio, cargar 52 cartas
       })
       .catch((error) => console.error("Error al obtener la baraja:", error));
   }, []);
 
-  const obtenerCartas = (deckId) => {
-    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=52`)
+  const obtenerCartas = (deckId, cantidad) => {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${cantidad}`)
       .then((response) => response.json())
       .then((data) => {
         const cartasOrdenadas = ordenarCartas(data.cards);
         setCards(cartasOrdenadas);
-        setFilteredCards(cartasOrdenadas); // Inicialmente, todas ordenadas
+        setFilteredCards(cartasOrdenadas);
       })
       .catch((error) => console.error("Error al obtener las cartas:", error));
   };
@@ -53,7 +53,7 @@ function Listas() {
 
   const handleFiltro = (tipo) => {
     setFilter(tipo);
-    setBusqueda(''); // Limpiar búsqueda cuando cambia el filtro
+    setBusqueda('');
     if (tipo === 'All') {
       setFilteredCards(cards);
     } else {
@@ -65,7 +65,7 @@ function Listas() {
   const handleRebarajar = () => {
     fetch(`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/`)
       .then((response) => response.json())
-      .then(() => obtenerCartas(deckId))
+      .then(() => obtenerCartas(deckId, 7)) // Ahora saca solo 7 cartas
       .catch((error) => console.error("Error al barajar las cartas:", error));
   };
 
@@ -76,7 +76,6 @@ function Listas() {
       aplicarFiltroActual();
       return;
     }
-
     const cartaBuscada = cards.filter(card => card.code.toUpperCase() === valor);
     setFilteredCards(cartaBuscada);
   };
@@ -93,7 +92,7 @@ function Listas() {
   if (!deckId) return <p>Cargando baraja...</p>;
 
   return (
-    <div>
+    <div className="c-container">
       <input
         type="text"
         placeholder="Buscar carta (ej: AS, 2D, KH)"
@@ -104,8 +103,10 @@ function Listas() {
 
       <Filtro onTipoChange={handleFiltro} />
 
-      <button onClick={() => navigate(-1)}>Volver</button>
-      <button onClick={handleRebarajar}>Rebarajar</button>
+      <div className="c-botones">
+        <button onClick={() => navigate(-1)}>Volver</button>
+        <button onClick={handleRebarajar}>Rebarajar 7 cartas</button>
+      </div>
 
       <section className="c-lista">
         {filteredCards.length > 0 ? (
