@@ -1,0 +1,14 @@
+.c-menu{
+    background-color: rgb(27, 27, 27);
+    flex-wrap: wrap;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    padding: 15px;
+    font-family: Arial;
+}
