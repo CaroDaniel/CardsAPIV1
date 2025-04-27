@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import './style.css'
 
 function Detalle() {
-    const [datacard, setDatacard] = useState([]);
+    const [datacard, setDatacard] = useState(null);
     const { code } = useParams();
 
     useEffect(() => {
