@@ -1,69 +1,125 @@
 import { useState, useEffect } from "react";
-import Filtro from "../Filtro"; 
 import { useNavigate } from "react-router-dom";
+import Filtro from '../Filtro';
 import './style.css';
 
 function Listas() {
-  const [cartas, setCartas] = useState([]);
-  const [tipoSeleccionado, setTipoSeleccionado] = useState("All");
-  const [busqueda, setBusqueda] = useState("");
-  const navegador = useNavigate();
+  const [deckId, setDeckId] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [filteredCards, setFilteredCards] = useState([]);
+  const [filter, setFilter] = useState('All'); // Filtro de tipo
+  const [busqueda, setBusqueda] = useState(''); // Nuevo: Estado para el buscador
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const obtenerCartas = async () => {
-      const respuesta = await fetch(`https://deckofcardsapi.com/api/deck/new/draw/?count=52`);
-      const json = await res.json();
-      setCartas(json.cards);
-    };
-    obtenerCartas();
+    fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1")
+      .then((response) => response.json())
+      .then((data) => {
+        setDeckId(data.deck_id);
+        obtenerCartas(data.deck_id);
+      })
+      .catch((error) => console.error("Error al obtener la baraja:", error));
   }, []);
 
-  const handleSuitChange = (tipo) => {
-    setTipoSeleccionado(tipo);
+  const obtenerCartas = (deckId) => {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=52`)
+      .then((response) => response.json())
+      .then((data) => {
+        const cartasOrdenadas = ordenarCartas(data.cards);
+        setCards(cartasOrdenadas);
+        setFilteredCards(cartasOrdenadas); // Inicialmente, todas ordenadas
+      })
+      .catch((error) => console.error("Error al obtener las cartas:", error));
   };
 
+  const ordenarCartas = (cartas) => {
+    const ordenValor = {
+      "ACE": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
+      "6": 6,
+      "7": 7,
+      "8": 8,
+      "9": 9,
+      "10": 10,
+      "JACK": 11,
+      "QUEEN": 12,
+      "KING": 13
+    };
+    return cartas.sort((a, b) => ordenValor[a.value] - ordenValor[b.value]);
+  };
 
-  let cartasFiltradas = cartas;
-  if (tipoSeleccionado !== "All") {
-    cartasFiltradas = cartas.filter(carta => carta.suit === tipoSeleccionado);
-  }
+  const handleFiltro = (tipo) => {
+    setFilter(tipo);
+    setBusqueda(''); // Limpiar búsqueda cuando cambia el filtro
+    if (tipo === 'All') {
+      setFilteredCards(cards);
+    } else {
+      const cartasFiltradas = cards.filter((card) => card.suit.toLowerCase() === tipo.toLowerCase());
+      setFilteredCards(cartasFiltradas);
+    }
+  };
 
-  if (busqueda.length >= 1) {
-    cartasFiltradas = cartasFiltradas.filter(carta =>
-      carta.value.toLowerCase().includes(busqueda.toLowerCase()) ||
-      carta.suit.toLowerCase().includes(busqueda.toLowerCase())
-    );
-  }
+  const handleRebarajar = () => {
+    fetch(`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/`)
+      .then((response) => response.json())
+      .then(() => obtenerCartas(deckId))
+      .catch((error) => console.error("Error al barajar las cartas:", error));
+  };
+
+  const handleBusquedaChange = (e) => {
+    const valor = e.target.value.toUpperCase();
+    setBusqueda(valor);
+    if (valor === '') {
+      aplicarFiltroActual();
+      return;
+    }
+
+    const cartaBuscada = cards.filter(card => card.code.toUpperCase() === valor);
+    setFilteredCards(cartaBuscada);
+  };
+
+  const aplicarFiltroActual = () => {
+    if (filter === 'All') {
+      setFilteredCards(cards);
+    } else {
+      const cartasFiltradas = cards.filter((card) => card.suit.toLowerCase() === filter.toLowerCase());
+      setFilteredCards(cartasFiltradas);
+    }
+  };
+
+  if (!deckId) return <p>Cargando baraja...</p>;
 
   return (
-    <>
+    <div>
       <input
         type="text"
-        placeholder="Buscar carta (ej: King, Queen, 7, Hearts)"
+        placeholder="Buscar carta (ej: AS, 2D, KH)"
         value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
+        onChange={handleBusquedaChange}
         className="c-buscador"
       />
-      <Filtro onSuitChange={handleSuitChange} />
+
+      <Filtro onTipoChange={handleFiltro} />
+
+      <button onClick={() => navigate(-1)}>Volver</button>
+      <button onClick={handleRebarajar}>Rebarajar</button>
+
       <section className="c-lista">
-        {cartasFiltradas.map((carta, index) => (
-          <div
-            className="c-lista-carta"
-            key={index}
-            onClick={() => navegador(`/detalle/${carta.code}`)}
-          >
-            <img
-              src={carta.image}
-              alt={`${carta.value} of ${carta.suit}`}
-              width="auto"
-              height="80"
-              loading="lazy"
-            />
-            <p>{carta.value} of {carta.suit}</p>
-          </div>
-        ))}
+        {filteredCards.length > 0 ? (
+          filteredCards.map((card, index) => (
+            <div className="c-lista-carta" key={index}>
+              <img src={card.image} alt={`${card.value} de ${card.suit}`} width="100" />
+              <p>{card.value} de {card.suit}</p>
+            </div>
+          ))
+        ) : (
+          <p>No se encontraron cartas.</p>
+        )}
       </section>
-    </>
+    </div>
   );
 }
 

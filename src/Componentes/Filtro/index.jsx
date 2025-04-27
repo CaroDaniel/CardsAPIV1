@@ -1,17 +1,15 @@
 function Filtro({ onTipoChange }) {
-    const tipos = [
-      "Todos", "Corazones", "Treboles", "Picas", "Diamantes"
-    ];
-  
-    return (
-      <div className="c-filtro">
-        {tipos.map((unTipo, index) => (
-          <button key={index} onClick={() => onTipoChange(unTipo)}>
-            {unTipo}
-          </button>
-        ))}
-      </div>
-    );
-  }
-  
-  export default Filtro;
+  const tipos = ["All", "Hearts", "Diamonds", "Clubs", "Spades"];
+
+  return (
+    <div className="c-filtro">
+      {tipos.map((tipo, index) => (
+        <button key={index} onClick={() => onTipoChange(tipo)}>
+          {tipo}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default Filtro;

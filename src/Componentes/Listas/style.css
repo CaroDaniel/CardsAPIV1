@@ -1,0 +1,29 @@
+.c-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .c-lista-carta {
+    text-align: center;
+    margin: 10px;
+  }
+  
+  button {
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+  }
+  
+  .c-filtro button {
+    margin: 5px;
+    background-color: #5b5656;
+    border: 1px solid #252525;
+    padding: 8px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #2d2d2d;
+  }
+  
