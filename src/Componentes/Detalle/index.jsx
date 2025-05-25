@@ -1,48 +1,50 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; 
+import { useState, useEffect, useContext } from "react";
+import { useParams } from "react-router-dom";
 import './style.css';
+import { AppContext } from "../../Contexto/Contexto";
 
 function Detalle() {
-  const { deckId } = useParams();
-  const [deckData, setDeckData] = useState(null);
-  const [cards, setCards] = useState([]);
+  const { code } = useParams(); // ← usamos "code" en lugar de "name"
+  const [carta, setCarta] = useState(null);
+  const { favoritos, setFavoritos } = useContext(AppContext);
 
-  // Obtén la baraja
+  const esFavorito = favoritos.some(fav => fav.code === code);
+
   useEffect(() => {
-    fetch(`https://deckofcardsapi.com/api/deck/${deckId}`)
-      .then(response => response.json())
-      .then(responseData => {
-        setDeckData(responseData);
-        // Una vez cargada la baraja, obtenemos las cartas de la baraja
-        fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=5`)
-          .then(response => response.json())
-          .then(cardsData => setCards(cardsData.cards))
-          .catch(error => console.error("Error al obtener las cartas:", error));
+    // Usamos un deck temporal solo para obtener detalles de una carta
+    fetch(`https://deckofcardsapi.com/api/deck/new/draw/?count=52`)
+      .then(res => res.json())
+      .then(data => {
+        const cartaEncontrada = data.cards.find(c => c.code === code);
+        setCarta(cartaEncontrada || null);
       })
-      .catch(error => console.error("Error al obtener la baraja:", error));
-  }, [deckId]);
+      .catch(error => console.error("Error al obtener carta:", error));
+  }, [code]);
 
-  if (!deckData) return <p>Cargando...</p>;
+  const toggleFavorito = () => {
+    if (esFavorito) {
+      setFavoritos(favoritos.filter(fav => fav.code !== code));
+    } else if (carta) {
+      setFavoritos([...favoritos, { code: carta.code, value: carta.value, suit: carta.suit, image: carta.image }]);
+    }
+  };
+
+  if (!carta) return <p>Cargando...</p>;
 
   return (
-    <div>
-      <h2>Baraja: {deckData.deck_id}</h2>
-      <p>Cantidad de cartas restantes: {deckData.remaining}</p>
-      <div>
-        <h3>Cartas:</h3>
-        <ul>
-          {cards.length > 0 ? (
-            cards.map(card => (
-              <li key={card.code}>
-                {card.value} de {card.suit}
-                <img src={card.image} alt={`${card.value} de ${card.suit}`} width="100" />
-              </li>
-            ))
-          ) : (
-            <p>No se han dibujado cartas aún.</p>
-          )}
-        </ul>
-      </div>
+    <div className={`carta-detalle ${carta.suit.toLowerCase()}`}>
+      <img
+        src={carta.image}
+        alt={`${carta.value} de ${carta.suit}`}
+        width="200"
+      />
+
+      <h2>{carta.value} de {carta.suit}</h2>
+      <p>Código: {carta.code}</p>
+
+      <button onClick={toggleFavorito}>
+        {esFavorito ? '❤️' : '🤍'}
+      </button>
     </div>
   );
 }

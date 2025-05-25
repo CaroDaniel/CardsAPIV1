@@ -123,7 +123,12 @@ function Listas() {
       <section className="c-lista">
         {cards.length > 0 ? (
           cards.map((card, index) => (
-            <div className="c-lista-carta" key={index}>
+            <div
+              className="c-lista-carta"
+              key={index}
+              onClick={() => navigate(`/detalle/${card.code}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <img src={card.image} alt={`${card.value} de ${card.suit}`} width="100" />
               <p>{card.value} de {card.suit}</p>
             </div>
