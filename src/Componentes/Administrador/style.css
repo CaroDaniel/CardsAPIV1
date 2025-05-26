@@ -3,6 +3,7 @@
     font-family: Arial, sans-serif;
     max-width: 100%;
     overflow-x: auto;
+    color: black;
 }
 
 .admin-container h1 {
